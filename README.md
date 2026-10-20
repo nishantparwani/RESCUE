@@ -1,219 +1,129 @@
-# RESCUE
-## Rapid Emergency Services Coordination & Unified Engine
+<div align="center">
 
-A mini project built for the Web Programming and Database Management System lab courses.
-The system lets hospitals see each other's resource stock in real time, send transfer requests,
-get admin approval, and communicate through a shared messaging board.
+# 🚑 RESCUE
 
----
+### Rapid Emergency Services Coordination & Unified Engine
 
-## How to Run
+**When one hospital runs out of oxygen and the next one over has twenty cylinders, minutes matter.
+RESCUE gives a city's hospitals one shared, live view of beds, blood, drugs and equipment — and a one-click way to move them.**
 
-Step 1 — Make sure you have Python 3 and MySQL installed and running.
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-3-000000?logo=flask&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-8-4479A1?logo=mysql&logoColor=white)
+![JavaScript](https://img.shields.io/badge/Vanilla-JS-F7DF1E?logo=javascript&logoColor=black)
+![Roles](https://img.shields.io/badge/roles-admin%20%7C%20staff-blueviolet)
 
-Step 2 — Install the Python libraries:
-    pip install -r requirements.txt
+<img src="docs/screenshots/02_admin_overview.png" alt="RESCUE admin overview" width="900">
 
-Step 3 — Start the server:
-    python app.py
-
-Open your browser and go to: http://localhost:5000
-
-The app creates the database, all tables, and sample data automatically on the first run.
-You do not need to run schema.sql manually unless you want to reset everything.
+</div>
 
 ---
 
-## Login Credentials (Sample Data)
+## The problem it solves
 
-Username   Password   Role    Hospital
-admin      admin123   Admin   All hospitals
-staff1     staff123   Staff   KEM Hospital
-staff2     staff123   Staff   Hinduja Hospital
+In an emergency, the stock that saves a life usually exists *somewhere* in the city — just not where the patient is.
+RESCUE connects hospitals so that:
 
----
+- every hospital's **ICU beds, blood, medicines and equipment** are visible in real time, with low stock flagged in red;
+- a staff member can **request a transfer** from a nearby hospital in seconds;
+- a city **admin approves** it, and the stock moves automatically;
+- everyone shares one **broadcast channel** for alerts ("keep 10% of ICU beds in reserve") and an **ambulance board**.
 
-## Project Structure
+## Screenshots
 
-rescue_project/
-    app.py              — Flask server, all routes and API logic
-    db.py               — Database connection, table creation, sample data
-    schema.sql          — Raw SQL to set up the database manually
-    requirements.txt    — Python libraries needed
-    README.md           — This file
-    templates/
-        login.html      — Login page with role selector
-        admin.html      — Admin panel (full CRUD)
-        staff.html      — Staff panel (hospital-scoped view)
-        index.html      — Redirect page
-    static/
-        js/
-            rescue_api.js   — JavaScript helper functions for API calls
+| Sign in (admin or hospital staff) | Hospital network |
+|---|---|
+| ![Login](docs/screenshots/01_login.png) | ![Hospitals](docs/screenshots/03_admin_hospitals.png) |
+| **Resources across the city, critical stock flagged** | **Transfer approvals** |
+| ![Resources](docs/screenshots/04_admin_resources.png) | ![Transfers](docs/screenshots/05_admin_transfers.png) |
+| **Ambulance fleet** | **Hospital staff view (own hospital only)** |
+| ![Ambulances](docs/screenshots/06_admin_ambulances.png) | ![Staff](docs/screenshots/08_staff_overview.png) |
 
-app.py contains all the Flask routes. Each route handles one API endpoint.
-Routes are grouped into: auth, hospitals, resources, transfers, messages, ambulances, triage, users.
+<details><summary>Broadcast log</summary>
 
-db.py handles the MySQL connection. The init_db() function runs on startup.
-It creates rescue_db if it does not exist, creates all the tables, and inserts sample data
-if the tables are empty. This means the project works out of the box with no manual SQL needed.
+![Messages](docs/screenshots/07_admin_messaging.png)
 
-schema.sql is the standalone SQL file for MySQL Workbench or phpMyAdmin.
-Useful for showing CREATE TABLE statements, foreign keys, and constraints in the DBMS evaluation.
+</details>
 
-login.html has a role selector and a form. JavaScript sends credentials to the server
-using fetch() and redirects the user to the correct panel based on their role.
+## Features
 
-admin.html loads all content dynamically without page reloads. The admin manages hospitals,
-resources, users, transfers, ambulances, and messages. Each section is a table loaded from JSON.
+| | |
+|---|---|
+| 🏥 **Hospitals** | Location, network, ICU capacity and free ICU beds |
+| 🩸 **Resources** | Beds, blood, drugs, equipment per hospital; anything under its critical threshold is flagged |
+| 🔁 **Transfers** | Request → admin approves / rejects → stock is deducted from the source automatically; insufficient stock is refused up front |
+| 📣 **Messaging** | City-wide broadcasts and hospital-to-hospital messages |
+| 🚑 **Ambulances** | Fleet status (active / busy / offline), location and ETA |
+| 🩺 **Triage** | Active cases with P1–P3 priority |
+| 🔐 **Roles** | Admin sees and manages everything; staff see only their own hospital — enforced on the server, not in the browser |
 
-staff.html shows only the logged-in user's own hospital's resources. Staff can submit
-transfer requests, check request status, send messages, and view ambulance information.
-The hospital restriction is enforced by the server using the session, not just the browser.
+## Quick start
 
-rescue_api.js wraps fetch calls into named functions like RescueAPI.resources.list()
-so any HTML page can use them without rewriting the full fetch code each time.
+You need Python 3 and a running MySQL server.
 
----
+```bash
+pip install -r requirements.txt
+copy .env.example .env      # macOS/Linux: cp — then set MYSQL_PASSWORD
+python app.py
+```
 
-## Database Tables
+Open **http://localhost:5000**. On the first run RESCUE creates the database, every table and sample data by itself.
 
-Seven tables, all in third normal form.
+| Username | Password | Role | Sees |
+|---|---|---|---|
+| `admin` | `admin123` | Admin | all hospitals |
+| `staff1` | `staff123` | Staff | KEM Hospital |
+| `staff2` | `staff123` | Staff | Hinduja Hospital |
 
-users — login details and roles. Passwords are hashed with PBKDF2-SHA256.
-        hospital_id is a foreign key linking each staff user to their hospital.
+Settings (environment or `.env`): `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DATABASE` (default `rescue_db`), `SECRET_KEY`.
 
-hospitals — name, location, network type, ICU capacity, and available ICU beds.
+## Under the hood
 
-resources — medicines, equipment, beds, and blood products stored per hospital.
-            critical_threshold is compared against stock to flag low items.
+```
+login.html · admin.html · staff.html
+          │  static/js/rescue_api.js (fetch, JSON)
+          ▼
+      app.py — Flask REST API, role checks on every route
+          │
+      db.py ──► MySQL: users · hospitals · resources · transfers · messages · ambulances · triage
+```
 
-transfers — the main workflow table. Records every request from submission to completion.
-            status ENUM has four values: pending, approved, rejected, completed.
-            When approved, the server automatically reduces stock in the resources table.
-            from_hospital_id, to_hospital_id, resource_id, requested_by are all foreign keys.
+- **Database:** seven tables in third normal form with primary, foreign, unique, not-null and check constraints
+  (`schema.sql` is the standalone script). Every list joins names in with `INNER JOIN`; the dashboard uses
+  `COUNT(*)` / `SUM(icu_available)`; a stock check runs before any transfer is accepted.
+- **Security:** passwords hashed with PBKDF2-SHA256, HttpOnly session cookies, role decorators on every route.
+- **Frontend:** single-page panels in plain HTML/CSS/JS, no framework; all data via JSON.
 
-messages — broadcast and direct messages between hospitals.
-           sender_id is a foreign key to users. to_hospital is nullable for broadcasts.
+<details>
+<summary>API reference</summary>
 
-ambulances — vehicle code, hospital assignment, status, location text, and ETA.
-             hospital_id is a foreign key to hospitals.
+All responses: `{ "success": true, "data": … }` or `{ "success": false, "error": "…" }`
 
-triage — active patient cases with priority P1, P2, or P3.
-         hospital_id is a foreign key to hospitals.
+| Method | Path | Who | What |
+|---|---|---|---|
+| POST | `/api/login` · `/api/logout` | anyone / signed in | Sign in / out |
+| GET | `/api/me` | signed in | Current user |
+| GET | `/api/admin/stats` | admin | Dashboard counts |
+| GET · POST · PUT · DELETE | `/api/hospitals[/<id>]` | admin (GET: all) | Hospitals |
+| GET · POST · PUT · DELETE | `/api/resources[/<id>]` | admin (GET: own hospital for staff) | Resources |
+| GET · POST | `/api/transfers` | staff / admin | List / request transfers |
+| PUT | `/api/transfers/<id>` | admin | Approve, reject or complete |
+| GET · POST | `/api/messages` | signed in | Broadcast and direct messages |
+| GET · POST · PUT | `/api/ambulances[/<id>]` | admin (GET: all) | Ambulance fleet |
+| GET · POST · DELETE | `/api/users[/<id>]` | admin | Users |
+| GET · POST | `/api/triage` | signed in | Triage cases |
 
----
+</details>
 
-## SQL Concepts Covered in This Project
+<details>
+<summary>Course mapping (Web Programming + DBMS labs)</summary>
 
-DDL (Lab 2):
-  CREATE DATABASE rescue_db
-  CREATE TABLE with PRIMARY KEY, NOT NULL, UNIQUE, FOREIGN KEY, CHECK constraints
-  All five constraint types are present in schema.sql
+- **Web:** HTML forms and CSS (login, admin, staff pages), JavaScript validation, `fetch` and live updates without reloads.
+- **DBMS:** DDL with all five constraint types, full CRUD, WHERE / ORDER BY / GROUP BY / HAVING and aggregates,
+  joins across hospitals, resources, transfers and users, subqueries for stock validation, 3NF across all seven tables.
 
-DML (Lab 3 and 5):
-  INSERT INTO with multiple rows for sample hospitals, users, resources, and ambulances
-  SELECT with WHERE clause filtering by hospital_id, status, and role
-  UPDATE to change transfer status and reduce stock count
-  DELETE to remove hospitals, resources, and users from the admin panel
-
-Joins (Lab 8):
-  All transfer and resource queries use INNER JOIN to pull hospital names and resource names
-  rather than returning raw IDs to the browser
-
-GROUP BY and aggregates (Lab 6):
-  Admin stats endpoint uses COUNT(*) for hospitals, resources, transfers, users
-  and SUM(icu_available) to total available ICU beds across all hospitals
-
-Subqueries (Lab 9):
-  Stock check before a transfer is submitted uses a SELECT inside the validation logic
-  to confirm the requested units do not exceed what the source hospital currently holds
-
-Normalization (Lab 10):
-  Hospital names are stored once in the hospitals table and referenced by ID everywhere else
-  No column group repeats across any table
-  All non-key columns depend only on the primary key in their table (3NF)
+</details>
 
 ---
 
-## API Endpoints
-
-All responses: { "success": true, "data": [...] }  or  { "success": false, "error": "message" }
-
-POST   /api/login               Anyone        Login
-POST   /api/logout              Logged in     Logout
-GET    /api/me                  Logged in     Current user info
-GET    /api/admin/stats         Admin only    Dashboard counts
-GET    /api/hospitals           Logged in     List hospitals
-POST   /api/hospitals           Admin only    Add hospital
-PUT    /api/hospitals/<id>      Admin only    Edit hospital
-DELETE /api/hospitals/<id>      Admin only    Remove hospital
-GET    /api/resources           Logged in     List resources (staff sees own hospital only)
-POST   /api/resources           Admin only    Add resource
-PUT    /api/resources/<id>      Admin only    Edit resource
-DELETE /api/resources/<id>      Admin only    Remove resource
-GET    /api/transfers           Logged in     List transfers (staff sees own hospital only)
-POST   /api/transfers           Staff/Admin   Submit transfer request
-PUT    /api/transfers/<id>      Admin only    Approve, reject, or complete
-GET    /api/messages            Logged in     Get message log
-POST   /api/messages            Logged in     Send message
-GET    /api/ambulances          Logged in     List ambulances
-POST   /api/ambulances          Admin only    Add ambulance
-PUT    /api/ambulances/<id>     Admin only    Update ambulance
-GET    /api/users               Admin only    List users
-POST   /api/users               Admin only    Create user
-DELETE /api/users/<id>          Admin only    Remove user
-GET    /api/triage              Logged in     List triage cases
-POST   /api/triage              Logged in     Add triage case
-
----
-
-## Security Notes
-
-Passwords are hashed before storage using generate_password_hash from Werkzeug.
-The hash method is PBKDF2-SHA256. The plain text password is never stored anywhere.
-
-Sessions use Flask cookies with HttpOnly set so JavaScript cannot read the cookie.
-The SECRET_KEY in app.py should be changed to a random string before deployment.
-
-Role restrictions are enforced server side using Python decorators.
-Changing something in the browser cannot bypass them because the check happens
-on the server before any data is returned or written.
-
----
-
-## Changing the Database Settings
-
-Edit the top of db.py:
-
-    DB_CONFIG = {
-        "host":     "localhost",
-        "user":     "root",
-        "password": "root",
-        "database": "rescue_db",
-    }
-
-Or set environment variables before running:
-    DB_PASSWORD=yourpassword
-    SECRET_KEY=anyrandomstring
-
----
-
-## Lab Mapping
-
-Web Programming labs covered:
-  Lab 2-4   HTML forms, tags, CSS styling across login, admin, and staff pages
-  Lab 5-6   JavaScript operators, conditions, and form validation
-  Lab 7-9   JavaScript fetch calls, dynamic page updates without reload
-
-DBMS labs covered:
-  Lab 2     DDL with all five constraint types in schema.sql
-  Lab 3     INSERT, SELECT, UPDATE, DELETE used throughout app.py
-  Lab 4     ER model with seven entities (see the report for the diagram description)
-  Lab 5-6   WHERE, ORDER BY, GROUP BY, HAVING, aggregate functions
-  Lab 8     JOIN queries across hospitals, resources, transfers, and users tables
-  Lab 9     Subqueries for stock validation before transfer approval
-  Lab 10    3NF normalization across all seven tables
-
----
-
-Nishant Parwani  |  Team Onrique  |  NMIMS Mumbai  |  2024-25
+<sub>Built as a mini project for the Web Programming and Database Management Systems lab courses. Sample hospitals and data are illustrative.</sub>

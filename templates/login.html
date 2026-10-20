@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RESCUE · Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--red:#e8001c;--navy:#04111f;--blue:#0a3cff;--teal:#00c2cb;--bg:#050d1a;--surface:#0b1929;--surface2:#112035;--border:#1a3150;--text:#e8eef6;--muted:#5a7a9a;--green:#00e676;--amber:#ffb300}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.wrap{width:100%;max-width:420px}
+.brand{text-align:center;margin-bottom:40px}
+.brand-name{font-family:'Space Mono',monospace;font-size:2.2rem;font-weight:700;color:#fff;letter-spacing:-1px}
+.brand-name span{color:var(--teal)}
+.brand-sub{font-size:.72rem;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:6px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:36px;position:relative}
+.card::before{content:'';position:absolute;top:0;left:40px;right:40px;height:1px;background:linear-gradient(90deg,transparent,var(--teal),transparent)}
+.card-title{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:24px}
+.form-group{margin-bottom:16px}
+.form-label{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px}
+.form-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,194,203,.08)}
+.form-input::placeholder{color:rgba(90,122,154,.4)}
+.role-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.role-btn{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all .2s}
+.role-btn:hover{border-color:rgba(0,194,203,.3)}
+.role-btn.active{border-color:var(--teal);background:rgba(0,194,203,.06)}
+.role-btn.active::after{content:'';display:block;position:absolute}
+.role-icon{font-size:1.3rem}
+.role-label{font-family:'Space Mono',monospace;font-size:.6rem;font-weight:700;letter-spacing:.5px;color:var(--muted)}
+.role-btn.active .role-label{color:var(--teal)}
+.btn{width:100%;padding:14px;border-radius:6px;font-family:'Space Mono',monospace;font-size:.75rem;font-weight:700;letter-spacing:1px;border:none;cursor:pointer;transition:all .25s;margin-top:4px}
+.btn-primary{background:linear-gradient(135deg,var(--blue),#0a2aaa);color:#fff}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(10,60,255,.4)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.error-box{background:rgba(232,0,28,.08);border:1px solid rgba(232,0,28,.25);border-radius:4px;padding:10px 14px;font-size:.8rem;color:#ff6b6b;margin-bottom:14px;display:none}
+.error-box.show{display:block}
+.demo-hint{margin-top:20px;padding:14px;background:rgba(0,194,203,.04);border:1px solid rgba(0,194,203,.12);border-radius:6px;font-size:.72rem;color:var(--muted);line-height:1.7}
+.demo-hint strong{color:var(--teal);font-family:'Space Mono',monospace}
+.security-note{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:.72rem;color:var(--muted);padding:8px 12px;background:rgba(10,60,255,.04);border-radius:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-name">RES<span>CUE</span></div>
+    <div class="brand-sub">Mumbai Emergency Grid</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Sign in to your account</div>
+    <div class="error-box" id="errBox">Invalid credentials. Please try again.</div>
+
+    <div style="margin-bottom:20px">
+      <div style="font-family:'Space Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Select Role</div>
+      <div class="role-row">
+        <div class="role-btn active" id="role-admin" onclick="setRole('admin')">
+          <div class="role-icon">🛡️</div>
+          <div class="role-label">ADMIN</div>
+        </div>
+        <div class="role-btn" id="role-staff" onclick="setRole('staff')">
+          <div class="role-icon">🏥</div>
+          <div class="role-label">STAFF</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Username</label>
+      <input class="form-input" type="text" id="username" placeholder="Enter username" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" id="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+
+    <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">SIGN IN TO RESCUE →</button>
+    <div class="security-note">🔒 All sessions are encrypted and role-restricted</div>
+  </div>
+
+  <div class="demo-hint">
+    <strong>Demo Credentials</strong><br>
+    Admin &nbsp;&nbsp;&nbsp;: <strong>admin</strong> / <strong>admin123</strong><br>
+    Staff KEM &nbsp;: <strong>staff1</strong> / <strong>staff123</strong><br>
+    Staff Hinduja: <strong>staff2</strong> / <strong>staff123</strong>
+  </div>
+</div>
+
+<script>
+let selectedRole = 'admin';
+
+function setRole(r) {
+  selectedRole = r;
+  ['admin','staff'].forEach(x => {
+    document.getElementById('role-'+x).classList.toggle('active', x === r);
+  });
+  const hints = {admin:'admin', staff:'staff1'};
+  document.getElementById('username').placeholder = hints[r] + ' (demo)';
+}
+
+async function doLogin() {
+  const btn  = document.getElementById('loginBtn');
+  const errB = document.getElementById('errBox');
+  const user = document.getElementById('username').value.trim();
+  const pass = document.getElementById('password').value;
+
+  if (!user || !pass) {
+    errB.textContent = 'Please enter username and password.';
+    errB.classList.add('show'); return;
+  }
+  errB.classList.remove('show');
+  btn.disabled = true;
+  btn.textContent = 'AUTHENTICATING...';
+
+  try {
+    const res  = await fetch('/api/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username: user, password: pass})
+    });
+    const data = await res.json();
+    if (data.success) {
+      btn.textContent = 'ACCESS GRANTED ✓';
+      btn.style.background = 'linear-gradient(135deg,#00a855,#006633)';
+      setTimeout(() => window.location.href = data.data.redirect, 600);
+    } else {
+      errB.textContent = data.error || 'Invalid credentials.';
+      errB.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'SIGN IN TO RESCUE →';
+    }
+  } catch(e) {
+    errB.textContent = 'Server error. Is Flask running?';
+    errB.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = 'SIGN IN TO RESCUE →';
+  }
+}
+</script>
+</body>
+</html>

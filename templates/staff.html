@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RESCUE · Staff Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--red:#e8001c;--navy:#04111f;--blue:#0a3cff;--teal:#00c2cb;--bg:#050d1a;--surface:#0b1929;--surface2:#112035;--border:#1a3150;--text:#e8eef6;--muted:#5a7a9a;--green:#00e676;--amber:#ffb300;--sidebar:210px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+.topbar{height:48px;background:linear-gradient(90deg,#040e1c,#04111f);border-bottom:1px solid var(--border);display:flex;align-items:center;position:sticky;top:0;z-index:200;flex-shrink:0}
+.tb-brand{width:var(--sidebar);padding:0 20px;border-right:1px solid var(--border);height:100%;display:flex;align-items:center}
+.tb-brand-txt{font-family:'Space Mono',monospace;font-size:1rem;font-weight:700;color:#fff}
+.tb-brand-txt span{color:var(--teal)}
+.tb-hosp{flex:1;padding:0 20px;font-family:'Space Mono',monospace;font-size:.68rem;color:var(--teal);letter-spacing:1px;display:flex;align-items:center;gap:10px}
+.tb-hosp::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s ease infinite}
+.tb-right{display:flex;align-items:center;border-left:1px solid var(--border);height:100%}
+.tb-user{padding:0 18px;height:100%;display:flex;align-items:center;gap:10px}
+.tb-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--teal),#006666);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:.65rem;font-weight:700}
+.tb-uname{font-size:.8rem;font-weight:600}
+.tb-urole{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--teal)}
+.tb-logout{height:100%;padding:0 18px;background:transparent;border:none;border-left:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:'Space Mono',monospace;font-size:.62rem;transition:all .2s}
+.tb-logout:hover{background:rgba(232,0,28,.08);color:var(--red)}
+
+.app-body{display:flex;flex:1;overflow:hidden}
+.sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;position:sticky;top:48px;height:calc(100vh - 48px)}
+.sb-section{padding:16px 0 8px}
+.sb-label{font-family:'Space Mono',monospace;font-size:.55rem;color:rgba(90,122,154,.45);letter-spacing:2px;text-transform:uppercase;padding:0 16px;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:all .18s;border-left:3px solid transparent;font-size:.84rem;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:rgba(0,194,203,.07);color:var(--teal);border-left-color:var(--teal)}
+.nav-icon{width:18px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--amber);color:var(--bg);font-family:'Space Mono',monospace;font-size:.56rem;font-weight:700;padding:2px 5px;border-radius:8px}
+
+.main{flex:1;overflow-y:auto;padding:24px}
+.page{display:none;animation:fadeUp .3s ease both}
+.page.active{display:block}
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
+.page-title{font-family:'Space Mono',monospace;font-size:.88rem;color:#fff;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.page-title::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--teal);animation:pulse 2s ease infinite}
+.page-sub{font-size:.78rem;color:var(--muted);margin-top:4px}
+
+.stats-row{display:grid;gap:12px;margin-bottom:20px}
+.cols4{grid-template-columns:repeat(4,1fr)}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;animation:fadeUp .4s ease both}
+.stat-val{font-family:'Space Mono',monospace;font-size:1.7rem;font-weight:700;color:#fff;line-height:1}
+.stat-val.g{color:var(--green)}.stat-val.r{color:var(--red)}.stat-val.a{color:var(--amber)}.stat-val.t{color:var(--teal)}
+.stat-lbl{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:4px;font-family:'Space Mono',monospace}
+
+.btn{padding:8px 16px;border-radius:5px;font-family:'Space Mono',monospace;font-size:.66rem;font-weight:700;cursor:pointer;letter-spacing:.5px;border:none;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,var(--blue),#0a2aaa);color:#fff}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(10,60,255,.4)}
+.btn-success{background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.25);color:var(--green)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-outline:hover{border-color:var(--teal);color:var(--teal)}
+.btn-sm{padding:5px 10px;font-size:.58rem}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px}
+.panel-head{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(90deg,var(--surface2),var(--surface))}
+.ph-title{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--teal);letter-spacing:1px;display:flex;align-items:center;gap:7px}
+.ph-title::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--teal);animation:pulse 2s ease infinite}
+
+table{width:100%;border-collapse:collapse}
+th{padding:10px 14px;text-align:left;font-family:'Space Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid var(--border);background:rgba(10,60,255,.04)}
+td{padding:12px 14px;border-bottom:1px solid rgba(26,49,80,.4);font-size:.84rem;vertical-align:middle}
+tr:hover td{background:rgba(10,60,255,.03)}
+tr:last-child td{border-bottom:none}
+
+.chip{display:inline-flex;padding:3px 9px;border-radius:20px;font-size:.66rem;font-weight:600;font-family:'Space Mono',monospace;white-space:nowrap}
+.chip-green{background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.22);color:var(--green)}
+.chip-red{background:rgba(232,0,28,.1);border:1px solid rgba(232,0,28,.22);color:#ff6b6b}
+.chip-amber{background:rgba(255,179,0,.1);border:1px solid rgba(255,179,0,.22);color:var(--amber)}
+.chip-blue{background:rgba(10,60,255,.1);border:1px solid rgba(10,60,255,.22);color:#7aa3ff}
+.chip-teal{background:rgba(0,194,203,.1);border:1px solid rgba(0,194,203,.22);color:var(--teal)}
+.chip-muted{background:rgba(90,122,154,.1);border:1px solid rgba(90,122,154,.22);color:var(--muted)}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:999;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:10px;width:90%;max-width:480px;overflow-y:auto;animation:fadeUp .25s ease both;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--surface2)}
+.modal-title{font-family:'Space Mono',monospace;font-size:.78rem;color:var(--teal)}
+.modal-x{background:transparent;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:4px 8px;border-radius:4px;transition:all .2s;line-height:1}
+.modal-x:hover{background:var(--surface);color:#fff}
+.modal-body{padding:22px}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.form-label{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.form-input,.form-select,.form-textarea{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:9px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.86rem;outline:none;transition:all .2s;width:100%}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,194,203,.08)}
+.form-input::placeholder,.form-textarea::placeholder{color:rgba(90,122,154,.4)}
+.form-textarea{resize:vertical;min-height:80px}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.toast-wrap{position:fixed;top:58px;right:16px;z-index:1000;display:flex;flex-direction:column;gap:7px;pointer-events:none}
+.toast{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 15px;font-size:.78rem;min-width:240px;animation:fadeUp .25s ease both;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.toast-drain{height:2px;border-radius:1px;margin-top:7px}
+@keyframes drain{from{width:100%}to{width:0%}}
+
+.msg-log{background:var(--bg);height:200px;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:5px}
+.msg-item{padding:7px 11px;border-radius:4px;font-size:.76rem;line-height:1.5}
+.msg-item.g{background:rgba(0,230,118,.05);border-left:3px solid var(--green)}
+.msg-item.b{background:rgba(10,60,255,.05);border-left:3px solid var(--blue)}
+.msg-item.t{background:rgba(0,194,203,.05);border-left:3px solid var(--teal)}
+.msg-time{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--muted);margin-left:6px}
+.msg-compose{display:flex;border-top:1px solid var(--border)}
+.msg-input{flex:1;background:var(--bg);border:none;padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.84rem;outline:none;border-right:1px solid var(--border)}
+.msg-input::placeholder{color:rgba(90,122,154,.35)}
+.msg-send{background:var(--teal);color:var(--bg);border:none;padding:0 18px;font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;cursor:pointer;transition:background .2s}
+.msg-send:hover{background:#009fa8}
+
+@media(max-width:768px){.sidebar{display:none}.cols4{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tb-brand"><div class="tb-brand-txt">RES<span>CUE</span></div></div>
+  <div class="tb-hosp" id="tbHosp">Hospital Staff Portal</div>
+  <div class="tb-right">
+    <div class="tb-user">
+      <div class="tb-avatar">S</div>
+      <div>
+        <div class="tb-uname" id="tbUsername">Staff</div>
+        <div class="tb-urole">HOSPITAL STAFF</div>
+      </div>
+    </div>
+    <button class="tb-logout" onclick="doLogout()">SIGN OUT</button>
+  </div>
+</div>
+
+<div class="app-body">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-section">
+      <div class="sb-label">My Hospital</div>
+      <div class="nav-item active" onclick="goPage('overview')"><span class="nav-icon">⬡</span> Overview</div>
+      <div class="nav-item" onclick="goPage('resources')"><span class="nav-icon">💊</span> Resources</div>
+      <div class="nav-item" onclick="goPage('transfers')"><span class="nav-icon">⇄</span> Transfers <span class="nav-badge" id="myPendingBadge">0</span></div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-label">Coordination</div>
+      <div class="nav-item" onclick="goPage('ambulances')"><span class="nav-icon">🚑</span> Ambulances</div>
+      <div class="nav-item" onclick="goPage('messaging')"><span class="nav-icon">📨</span> Messages</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" id="mainContent"></div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">Action</div>
+      <button class="modal-x" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+let currentPage = 'overview';
+let myHospitalId = null;
+
+const API = {
+  get:  url      => fetch(url).then(r=>r.json()),
+  post: (url, b) => fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(r=>r.json()),
+};
+
+function toast(msg, type='info') {
+  const w = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  const colors = {success:'var(--green)',error:'var(--red)',info:'var(--blue)',warn:'var(--amber)'};
+  t.className = 'toast';
+  t.innerHTML = msg + `<div class="toast-drain" style="background:${colors[type]||colors.info};animation:drain 3.2s linear both"></div>`;
+  w.appendChild(t); setTimeout(()=>t.remove(),3400);
+}
+
+function showModal(title, bodyHtml, actions) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = bodyHtml;
+  document.getElementById('modalFoot').innerHTML = actions.map(a=>
+    `<button class="btn ${a.cls}" onclick="${a.fn}">${a.label}</button>`
+  ).join('');
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target.id==='modalOverlay')closeModal();});
+
+function chip(label,color){return `<span class="chip chip-${color}">${label}</span>`;}
+function statusChip(s){const m={pending:'amber',approved:'green',rejected:'red',completed:'teal',active:'green',busy:'amber',offline:'muted'};return chip(s.toUpperCase(),m[s]||'muted');}
+function getTime(){return new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});}
+
+function goPage(p){
+  currentPage = p;
+  document.querySelectorAll('.nav-item').forEach(el=>
+    el.classList.toggle('active', el.textContent.trim().toLowerCase().startsWith(p.slice(0,4)))
+  );
+  renderPage(p);
+}
+
+async function doLogout(){await API.post('/api/logout',{});window.location.href='/login';}
+
+/* ── RENDER ── */
+async function renderPage(page) {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);font-family:Space Mono,monospace;font-size:.7rem">LOADING...</div>';
+  const pages = {overview:pageOverview,resources:pageResources,transfers:pageTransfers,ambulances:pageAmbulances,messaging:pageMessaging};
+  const fn = pages[page]||pageOverview;
+  main.innerHTML = `<div class="page active">${await fn()}</div>`;
+}
+
+/* ── OVERVIEW ── */
+async function pageOverview() {
+  const [resR, txR] = await Promise.all([API.get('/api/resources'), API.get('/api/transfers')]);
+  const resources = resR.data||[];
+  const transfers = txR.data||[];
+  const pending   = transfers.filter(t=>t.status==='pending').length;
+  const critical  = resources.filter(r=>r.stock<=r.critical_threshold).length;
+  document.getElementById('myPendingBadge').textContent = pending;
+
+  return `
+  <div class="page-header">
+    <div><div class="page-title">MY HOSPITAL OVERVIEW</div><div class="page-sub" id="hospSubtitle">Loading...</div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="openRequestTransfer()">+ REQUEST RESOURCE</button>
+      <button class="btn btn-outline btn-sm" onclick="renderPage('overview')">↻ REFRESH</button>
+    </div>
+  </div>
+  <div class="stats-row cols4">
+    <div class="stat-card"><div class="stat-val g">${resources.length}</div><div class="stat-lbl">Resource Types</div></div>
+    <div class="stat-card"><div class="stat-val r">${critical}</div><div class="stat-lbl">Critical Stock</div></div>
+    <div class="stat-card"><div class="stat-val a">${pending}</div><div class="stat-lbl">Pending Transfers</div></div>
+    <div class="stat-card"><div class="stat-val t">${transfers.filter(t=>t.status==='approved').length}</div><div class="stat-lbl">Approved</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:16px">
+    <div class="panel">
+      <div class="panel-head"><div class="ph-title">CRITICAL RESOURCES</div></div>
+      <table><thead><tr><th>Resource</th><th>Stock</th><th>Threshold</th><th>Action</th></tr></thead>
+      <tbody>${resources.filter(r=>r.stock<=r.critical_threshold).map(r=>`<tr>
+        <td style="font-weight:600">${r.name}</td>
+        <td style="font-family:'Space Mono',monospace;color:var(--red)">${r.stock} ${r.unit}</td>
+        <td style="font-family:'Space Mono',monospace;color:var(--muted)">${r.critical_threshold}</td>
+        <td><button class="btn btn-primary btn-sm" onclick="openRequestTransfer(${r.id})">REQUEST</button></td>
+      </tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--green);padding:20px">All stock levels normal</td></tr>'}
+      </tbody></table>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><div class="ph-title">MY RECENT TRANSFERS</div></div>
+      <table><thead><tr><th>Resource</th><th>Units</th><th>Status</th></tr></thead>
+      <tbody>${transfers.slice(0,6).map(t=>`<tr>
+        <td>${t.resource_name}</td>
+        <td style="font-family:'Space Mono',monospace">${t.units}</td>
+        <td>${statusChip(t.status)}</td>
+      </tr>`).join('')||'<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:20px">No transfers yet</td></tr>'}
+      </tbody></table>
+    </div>
+  </div>`;
+}
+
+/* ── RESOURCES ── */
+async function pageResources() {
+  const {data: rows} = await API.get('/api/resources');
+  return `
+  <div class="page-header">
+    <div><div class="page-title">RESOURCE INVENTORY</div><div class="page-sub">Your hospital stock levels</div></div>
+    <div class="page-actions">
+      <input style="background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:7px 12px;color:var(--text);font-size:.78rem;outline:none;width:200px" placeholder="Search resources..." oninput="filterRes(this.value)">
+      <button class="btn btn-primary" onclick="openRequestTransfer()">REQUEST TRANSFER</button>
+    </div>
+  </div>
+  <div class="panel"><table id="resTable">
+    <thead><tr><th>Resource</th><th>Category</th><th>Stock</th><th>Status</th><th>Action</th></tr></thead>
+    <tbody>${rows.map(r=>{
+      const low = r.stock <= r.critical_threshold;
+      return `<tr>
+        <td style="font-weight:600">${r.name}</td>
+        <td>${chip(r.category,'muted')}</td>
+        <td style="font-family:'Space Mono',monospace;font-weight:700;color:${low?'var(--red)':'var(--green)'}">${r.stock} ${r.unit}</td>
+        <td>${chip(low?'CRITICAL':'OK',low?'red':'green')}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="openRequestTransfer(${r.id})">REQUEST</button></td>
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+/* ── TRANSFERS ── */
+async function pageTransfers() {
+  const {data: rows} = await API.get('/api/transfers');
+  return `
+  <div class="page-header">
+    <div><div class="page-title">MY TRANSFER REQUESTS</div><div class="page-sub">${rows.length} total requests</div></div>
+    <div class="page-actions"><button class="btn btn-primary" onclick="openRequestTransfer()">+ NEW REQUEST</button></div>
+  </div>
+  <div class="panel"><table>
+    <thead><tr><th>ID</th><th>From</th><th>Resource</th><th>To</th><th>Units</th><th>Status</th><th>Date</th></tr></thead>
+    <tbody>${rows.map(t=>`<tr>
+      <td style="font-family:'Space Mono',monospace;font-size:.68rem;color:var(--muted)">TR-${t.id}</td>
+      <td>${t.from_hospital}</td>
+      <td>${chip(t.resource_name,'blue')}</td>
+      <td>${t.to_hospital}</td>
+      <td style="font-family:'Space Mono',monospace">${t.units}</td>
+      <td>${statusChip(t.status)}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:.68rem;color:var(--muted)">${t.created_at}</td>
+    </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">No transfers yet</td></tr>'}
+    </tbody>
+  </table></div>`;
+}
+
+/* ── AMBULANCES ── */
+async function pageAmbulances() {
+  const {data: rows} = await API.get('/api/ambulances');
+  return `
+  <div class="page-header"><div><div class="page-title">AMBULANCE STATUS</div><div class="page-sub">Fleet overview — read-only</div></div></div>
+  <div class="panel"><table>
+    <thead><tr><th>Code</th><th>Hospital</th><th>Status</th><th>Location</th><th>ETA</th></tr></thead>
+    <tbody>${rows.map(a=>`<tr>
+      <td style="font-family:'Space Mono',monospace;font-weight:700">${a.code}</td>
+      <td>${a.hospital_name||'—'}</td>
+      <td>${statusChip(a.status)}</td>
+      <td>${a.location}</td>
+      <td style="font-family:'Space Mono',monospace;color:var(--teal)">${a.eta}</td>
+    </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+/* ── MESSAGING ── */
+async function pageMessaging() {
+  const {data: msgs} = await API.get('/api/messages');
+  return `
+  <div class="page-header"><div><div class="page-title">INTER-HOSPITAL MESSAGES</div><div class="page-sub">Broadcast and receive hospital messages</div></div></div>
+  <div class="panel" style="display:flex;flex-direction:column">
+    <div class="panel-head"><div class="ph-title">BROADCAST LOG</div></div>
+    <div class="msg-log" id="msgLog">
+      ${msgs.map(m=>`<div class="msg-item t"><strong>${m.sender_name}</strong>${m.hospital_name?' · '+m.hospital_name:''}: ${m.content}<span class="msg-time">${m.timestamp}</span></div>`).join('')}
+    </div>
+    <div class="msg-compose">
+      <input class="msg-input" id="msgInput" placeholder="Type your message to broadcast to all hospitals...">
+      <button class="msg-send" onclick="sendMessage()">SEND</button>
+    </div>
+  </div>`;
+}
+
+/* ── SEND MESSAGE ── */
+async function sendMessage() {
+  const inp = document.getElementById('msgInput');
+  if (!inp?.value.trim()) return;
+  const r = await API.post('/api/messages', {content: inp.value.trim(), broadcast: 1});
+  if (r.success) {
+    toast('Message sent','success');
+    const log = document.getElementById('msgLog');
+    if (log) {
+      const d = document.createElement('div');
+      d.className = 'msg-item b';
+      d.innerHTML = `<strong>You</strong>: ${inp.value}<span class="msg-time">${getTime()}</span>`;
+      log.prepend(d);
+    }
+    inp.value = '';
+  } else toast(r.error,'error');
+}
+
+/* ── REQUEST TRANSFER MODAL ── */
+async function openRequestTransfer(preselectedResourceId) {
+  const [resR, hospR] = await Promise.all([API.get('/api/resources'), API.get('/api/hospitals')]);
+  const allRes = resR.data  || [];
+  const hosps  = hospR.data || [];
+  const myHosp = hosps.find(h=>h.id==myHospitalId);
+
+  showModal('REQUEST RESOURCE TRANSFER', `
+    <div class="form-group"><label class="form-label">Resource Needed (from source hospital)</label>
+      <select class="form-select" id="txRes">
+        ${allRes.map(r=>`<option value="${r.id}" data-hosp="${r.hospital_id}" ${r.id==preselectedResourceId?'selected':''}>${r.name} (${r.hospital_name}) — ${r.stock} available</option>`).join('')}
+      </select>
+    </div>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Units Required</label>
+        <input class="form-input" id="txUnits" type="number" placeholder="1" min="1">
+      </div>
+      <div class="form-group"><label class="form-label">Destination Hospital</label>
+        <select class="form-select" id="txToHosp">
+          ${hosps.filter(h=>h.id!=myHospitalId).map(h=>`<option value="${h.id}">${h.name}</option>`).join('')}
+          ${myHosp?`<option value="${myHosp.id}" selected>${myHosp.name} (My Hospital)</option>`:''}
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes (optional)</label>
+      <textarea class="form-textarea" id="txNotes" placeholder="Reason for request, urgency level..."></textarea>
+    </div>`,
+    [{label:'CANCEL',cls:'btn-outline',fn:'closeModal()'},{label:'SUBMIT REQUEST',cls:'btn-primary',fn:'submitTransfer()'}]
+  );
+}
+
+async function submitTransfer() {
+  const selRes = document.getElementById('txRes');
+  const resId  = selRes.value;
+  const hospId = selRes.options[selRes.selectedIndex].dataset.hosp;
+  const toHosp = document.getElementById('txToHosp').value;
+  const units  = parseInt(document.getElementById('txUnits').value)||0;
+  const notes  = document.getElementById('txNotes').value;
+
+  if (!units || units < 1) { toast('Enter a valid unit count','error'); return; }
+
+  const r = await API.post('/api/transfers', {
+    from_hospital_id: parseInt(hospId),
+    to_hospital_id:   parseInt(toHosp),
+    resource_id:      parseInt(resId),
+    units,
+    notes
+  });
+  if (r.success) {
+    closeModal();
+    toast('Transfer request submitted — awaiting admin approval','success');
+    renderPage('transfers');
+  } else toast(r.error,'error');
+}
+
+function filterRes(q) {
+  document.querySelectorAll('#resTable tbody tr').forEach(tr => {
+    tr.style.display = tr.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+
+/* ── INIT ── */
+(async function init(){
+  try {
+    const me = await API.get('/api/me');
+    if (me.success) {
+      document.getElementById('tbUsername').textContent = me.data.username;
+      myHospitalId = me.data.hospital_id;
+      const hospName = me.data.hospital_name || 'Your Hospital';
+      document.getElementById('tbHosp').textContent = hospName;
+      const sub = document.getElementById('hospSubtitle');
+      if (sub) sub.textContent = hospName + ' · Staff View';
+    }
+  } catch(e) {}
+  renderPage('overview');
+})();
+</script>
+</body>
+</html>

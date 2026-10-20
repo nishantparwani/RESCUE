@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RESCUE · Redirecting</title>
+<style>
+body{background:#050d1a;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;font-family:'Courier New',monospace}
+.msg{color:#00c2cb;font-size:.8rem;letter-spacing:3px;text-align:center}
+.dot{animation:p 1s ease infinite}.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes p{0%,100%{opacity:.2}50%{opacity:1}}
+</style>
+</head>
+<body>
+<div class="msg">
+  RESCUE GRID<br><br>
+  <span class="dot">●</span> <span class="dot">●</span> <span class="dot">●</span>
+</div>
+<script>
+// If user hits /dashboard directly, redirect based on session role
+// This page is rarely seen — Flask redirects from / directly
+window.location.href = '/';
+</script>
+</body>
+</html>

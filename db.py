@@ -8,14 +8,20 @@ from mysql.connector import Error
 from werkzeug.security import generate_password_hash
 import os
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 # ─────────────────────────────────────────
 #  CONFIG  (change here or use .env)
 # ─────────────────────────────────────────
 DB_CONFIG = {
-    "host": "localhost",
-    "user": "root",
-    "password": "789321",   # ✔ set directly
-    "database": "rescue_db",
+    "host": os.getenv("MYSQL_HOST", "localhost"),
+    "user": os.getenv("MYSQL_USER", "root"),
+    "password": os.getenv("MYSQL_PASSWORD", ""),   # set MYSQL_PASSWORD in your environment or a .env file
+    "database": os.getenv("MYSQL_DATABASE", "rescue_db"),
     "charset": "utf8mb4",
     "autocommit": False,
 }
@@ -77,14 +83,15 @@ def _create_database():
     try:
         conn = mysql.connector.connect(**DB_CONFIG_NO_DB)
         cursor = conn.cursor()
+        name = DB_CONFIG["database"].replace("`", "")
         cursor.execute(
-            "CREATE DATABASE IF NOT EXISTS rescue_db "
+            f"CREATE DATABASE IF NOT EXISTS `{name}` "
             "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
         )
         conn.commit()
         cursor.close()
         conn.close()
-        print("[DB] Database 'rescue_db' ensured.")
+        print(f"[DB] Database '{name}' ensured.")
     except Error as e:
         raise RuntimeError(f"[DB] Could not create database: {e}")
 

@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RESCUE · Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--red:#e8001c;--navy:#04111f;--blue:#0a3cff;--teal:#00c2cb;--bg:#050d1a;--surface:#0b1929;--surface2:#112035;--border:#1a3150;--text:#e8eef6;--muted:#5a7a9a;--green:#00e676;--amber:#ffb300;--white:#ffffff;--sidebar:210px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* TOPBAR */
+.topbar{height:48px;background:linear-gradient(90deg,#040e1c,#04111f);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0;z-index:200;position:sticky;top:0;flex-shrink:0}
+.tb-brand{width:var(--sidebar);padding:0 20px;border-right:1px solid var(--border);height:100%;display:flex;align-items:center}
+.tb-brand-txt{font-family:'Space Mono',monospace;font-size:1rem;font-weight:700;color:#fff}
+.tb-brand-txt span{color:var(--teal)}
+.tb-ticker{flex:1;overflow:hidden;height:100%;display:flex;align-items:center;padding:0 20px}
+.tb-ticker-text{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--teal);letter-spacing:1px;white-space:nowrap}
+.tb-right{display:flex;align-items:center;border-left:1px solid var(--border);height:100%}
+.tb-user{padding:0 18px;height:100%;display:flex;align-items:center;gap:10px;cursor:pointer}
+.tb-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--red),#a00010);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:.65rem;font-weight:700}
+.tb-uinfo{display:flex;flex-direction:column}
+.tb-uname{font-size:.8rem;font-weight:600;line-height:1.2}
+.tb-urole{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--red)}
+.tb-logout{height:100%;padding:0 18px;background:transparent;border:none;border-left:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:'Space Mono',monospace;font-size:.62rem;letter-spacing:.5px;transition:all .2s}
+.tb-logout:hover{background:rgba(232,0,28,.08);color:var(--red)}
+
+/* LAYOUT */
+.app-body{display:flex;flex:1;overflow:hidden}
+.sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;position:sticky;top:48px;height:calc(100vh - 48px)}
+.sb-section{padding:16px 0 8px}
+.sb-label{font-family:'Space Mono',monospace;font-size:.55rem;color:rgba(90,122,154,.45);letter-spacing:2px;text-transform:uppercase;padding:0 16px;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:all .18s;border-left:3px solid transparent;font-size:.84rem;color:var(--muted)}
+.nav-item:hover{background:var(--surface2);color:var(--text);border-left-color:rgba(0,194,203,.3)}
+.nav-item.active{background:rgba(10,60,255,.08);color:#7aa3ff;border-left-color:var(--blue)}
+.nav-icon{width:18px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-family:'Space Mono',monospace;font-size:.56rem;font-weight:700;padding:2px 5px;border-radius:8px}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;padding:24px}
+.page{display:none;animation:fadeUp .3s ease both}
+.page.active{display:block}
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
+.page-title{font-family:'Space Mono',monospace;font-size:.88rem;color:#fff;letter-spacing:.5px;display:flex;align-items:center;gap:8px}
+.page-title::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--teal);animation:pulse 2s ease infinite}
+.page-sub{font-size:.78rem;color:var(--muted);margin-top:4px}
+.page-actions{display:flex;gap:8px}
+
+/* BUTTONS */
+.btn{padding:8px 16px;border-radius:5px;font-family:'Space Mono',monospace;font-size:.66rem;font-weight:700;cursor:pointer;letter-spacing:.5px;border:none;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,var(--blue),#0a2aaa);color:#fff}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(10,60,255,.4)}
+.btn-danger{background:rgba(232,0,28,.12);border:1px solid rgba(232,0,28,.3);color:#ff6b6b}
+.btn-danger:hover{background:rgba(232,0,28,.2)}
+.btn-success{background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.25);color:var(--green)}
+.btn-success:hover{background:rgba(0,230,118,.18)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-outline:hover{border-color:var(--teal);color:var(--teal)}
+.btn-sm{padding:5px 10px;font-size:.58rem}
+
+/* STATS */
+.stats-row{display:grid;gap:12px;margin-bottom:20px}
+.cols6{grid-template-columns:repeat(6,1fr)}
+.cols4{grid-template-columns:repeat(4,1fr)}
+.cols3{grid-template-columns:repeat(3,1fr)}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;cursor:default;animation:fadeUp .4s ease both}
+.stat-card:hover{border-color:rgba(0,194,203,.2)}
+.stat-val{font-family:'Space Mono',monospace;font-size:1.7rem;font-weight:700;color:#fff;line-height:1}
+.stat-val.g{color:var(--green)}.stat-val.r{color:var(--red)}.stat-val.a{color:var(--amber)}.stat-val.b{color:#7aa3ff}.stat-val.t{color:var(--teal)}
+.stat-lbl{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:4px;font-family:'Space Mono',monospace}
+.stat-bar{height:2px;background:var(--border);border-radius:1px;margin-top:10px;overflow:hidden}
+.stat-fill{height:100%;border-radius:1px;transition:width 1s ease}
+
+/* PANEL */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px}
+.panel-head{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(90deg,var(--surface2),var(--surface))}
+.ph-title{font-family:'Space Mono',monospace;font-size:.68rem;color:var(--teal);letter-spacing:1px;display:flex;align-items:center;gap:7px}
+.ph-title::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--teal);animation:pulse 2s ease infinite}
+.ph-meta{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--muted)}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse}
+th{padding:10px 14px;text-align:left;font-family:'Space Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;border-bottom:1px solid var(--border);background:rgba(10,60,255,.04)}
+td{padding:12px 14px;border-bottom:1px solid rgba(26,49,80,.4);font-size:.84rem;vertical-align:middle;transition:background .15s}
+tr:hover td{background:rgba(10,60,255,.03)}
+tr:last-child td{border-bottom:none}
+
+/* CHIPS */
+.chip{display:inline-flex;padding:3px 9px;border-radius:20px;font-size:.66rem;font-weight:600;font-family:'Space Mono',monospace;white-space:nowrap}
+.chip-green{background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.22);color:var(--green)}
+.chip-red{background:rgba(232,0,28,.1);border:1px solid rgba(232,0,28,.22);color:#ff6b6b}
+.chip-amber{background:rgba(255,179,0,.1);border:1px solid rgba(255,179,0,.22);color:var(--amber)}
+.chip-blue{background:rgba(10,60,255,.1);border:1px solid rgba(10,60,255,.22);color:#7aa3ff}
+.chip-teal{background:rgba(0,194,203,.1);border:1px solid rgba(0,194,203,.22);color:var(--teal)}
+.chip-muted{background:rgba(90,122,154,.1);border:1px solid rgba(90,122,154,.22);color:var(--muted)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:999;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:10px;width:90%;max-width:480px;max-height:85vh;overflow-y:auto;animation:fadeUp .25s ease both;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--surface2);position:sticky;top:0}
+.modal-title{font-family:'Space Mono',monospace;font-size:.78rem;color:var(--teal);letter-spacing:.5px}
+.modal-x{background:transparent;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:4px 8px;border-radius:4px;transition:all .2s;line-height:1}
+.modal-x:hover{background:var(--surface);color:#fff}
+.modal-body{padding:22px}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.form-label{font-family:'Space Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.form-input,.form-select{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:9px 13px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.86rem;outline:none;transition:all .2s;width:100%}
+.form-input:focus,.form-select:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,194,203,.08)}
+.form-input::placeholder{color:rgba(90,122,154,.4)}
+.form-select{appearance:none;cursor:pointer}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* TOAST */
+.toast-wrap{position:fixed;top:58px;right:16px;z-index:1000;display:flex;flex-direction:column;gap:7px;pointer-events:none}
+.toast{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 15px;font-size:.78rem;min-width:240px;animation:fadeUp .25s ease both;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.toast-drain{height:2px;border-radius:1px;margin-top:7px}
+@keyframes drain{from{width:100%}to{width:0%}}
+
+/* MSG LOG */
+.msg-log{background:var(--bg);height:180px;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:5px}
+.msg-item{padding:7px 11px;border-radius:4px;font-size:.76rem;line-height:1.5}
+.msg-item.g{background:rgba(0,230,118,.05);border-left:3px solid var(--green)}
+.msg-item.r{background:rgba(232,0,28,.05);border-left:3px solid var(--red)}
+.msg-item.b{background:rgba(10,60,255,.05);border-left:3px solid var(--blue)}
+.msg-item.t{background:rgba(0,194,203,.05);border-left:3px solid var(--teal)}
+.msg-time{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--muted);margin-left:6px}
+.msg-compose{display:flex;border-top:1px solid var(--border)}
+.msg-input{flex:1;background:var(--bg);border:none;padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.84rem;outline:none;border-right:1px solid var(--border)}
+.msg-input::placeholder{color:rgba(90,122,154,.35)}
+.msg-send{background:var(--blue);border:none;color:#fff;padding:0 18px;font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:background .2s}
+.msg-send:hover{background:#0a2aaa}
+
+@media(max-width:768px){.sidebar{display:none}.cols6,.cols4{grid-template-columns:repeat(2,1fr)}.cols3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tb-brand"><div class="tb-brand-txt">RES<span>CUE</span></div></div>
+  <div class="tb-ticker"><div class="tb-ticker-text" id="tickerText">⬡ RESCUE ADMIN PANEL — MUMBAI EMERGENCY GRID — ALL SYSTEMS NOMINAL</div></div>
+  <div class="tb-right">
+    <div class="tb-user">
+      <div class="tb-avatar">A</div>
+      <div class="tb-uinfo"><div class="tb-uname" id="tbUsername">Admin</div><div class="tb-urole">SYSTEM ADMIN</div></div>
+    </div>
+    <button class="tb-logout" onclick="doLogout()">SIGN OUT</button>
+  </div>
+</div>
+
+<div class="app-body">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-section">
+      <div class="sb-label">Main</div>
+      <div class="nav-item active" onclick="goPage('overview')"><span class="nav-icon">⬡</span> Overview</div>
+      <div class="nav-item" onclick="goPage('hospitals')"><span class="nav-icon">🏥</span> Hospitals</div>
+      <div class="nav-item" onclick="goPage('resources')"><span class="nav-icon">💊</span> Resources</div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-label">Operations</div>
+      <div class="nav-item" onclick="goPage('transfers')"><span class="nav-icon">⇄</span> Transfers <span class="nav-badge" id="pendingBadge">0</span></div>
+      <div class="nav-item" onclick="goPage('ambulances')"><span class="nav-icon">🚑</span> Ambulances</div>
+      <div class="nav-item" onclick="goPage('messaging')"><span class="nav-icon">📨</span> Messages</div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-label">Admin</div>
+      <div class="nav-item" onclick="goPage('users')"><span class="nav-icon">👥</span> Users</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" id="mainContent"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">Action</div>
+      <button class="modal-x" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ────────────────────────────────────
+   CORE UTILITIES
+──────────────────────────────────── */
+let currentPage = 'overview';
+
+const API = {
+  get:  (url)       => fetch(url).then(r=>r.json()),
+  post: (url, body) => fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json()),
+  put:  (url, body) => fetch(url,{method:'PUT', headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json()),
+  del:  (url)       => fetch(url,{method:'DELETE'}).then(r=>r.json()),
+};
+
+function toast(msg, type='info') {
+  const w = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  const colors = {success:'var(--green)', error:'var(--red)', info:'var(--blue)', warn:'var(--amber)'};
+  t.className = 'toast';
+  t.innerHTML = msg + `<div class="toast-drain" style="background:${colors[type]||colors.info};animation:drain 3.2s linear both"></div>`;
+  w.appendChild(t);
+  setTimeout(() => t.remove(), 3400);
+}
+
+function showModal(title, bodyHtml, actions) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = bodyHtml;
+  document.getElementById('modalFoot').innerHTML = actions.map(a =>
+    `<button class="btn ${a.cls}" onclick="${a.fn}">${a.label}</button>`
+  ).join('');
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+document.getElementById('modalOverlay').addEventListener('click', e => { if(e.target.id==='modalOverlay') closeModal(); });
+
+function chip(label, color) { return `<span class="chip chip-${color}">${label}</span>`; }
+function statusChip(s) {
+  const map = {pending:'amber',approved:'green',rejected:'red',completed:'teal',active:'green',busy:'amber',offline:'muted',online:'green',maintenance:'amber'};
+  return chip(s.toUpperCase(), map[s]||'muted');
+}
+function getTime() { return new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}); }
+
+function goPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.textContent.trim().toLowerCase().startsWith(page.slice(0,4)));
+  });
+  renderPage(page);
+}
+
+async function doLogout() {
+  await API.post('/api/logout', {});
+  window.location.href = '/login';
+}
+
+/* ────────────────────────────────────
+   PAGE RENDERER
+──────────────────────────────────── */
+async function renderPage(page) {
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);font-family:Space Mono,monospace;font-size:.7rem">LOADING...</div>';
+
+  const pages = {
+    overview:   pageOverview,
+    hospitals:  pageHospitals,
+    resources:  pageResources,
+    transfers:  pageTransfers,
+    ambulances: pageAmbulances,
+    messaging:  pageMessaging,
+    users:      pageUsers,
+  };
+  const fn = pages[page] || pageOverview;
+  const html = await fn();
+  main.innerHTML = `<div class="page active">${html}</div>`;
+  attachPageListeners(page);
+}
+
+/* ────────────────────────────────────
+   OVERVIEW
+──────────────────────────────────── */
+async function pageOverview() {
+  const { data: s } = await API.get('/api/admin/stats');
+  document.getElementById('pendingBadge').textContent = s.pending_transfers || 0;
+
+  return `
+  <div class="page-header">
+    <div><div class="page-title">SYSTEM OVERVIEW</div><div class="page-sub">RESCUE Grid · Mumbai · All systems nominal</div></div>
+    <div class="page-actions">
+      <button class="btn btn-danger btn-sm" onclick="broadcastAlert()">⚡ BROADCAST ALERT</button>
+    </div>
+  </div>
+  <div class="stats-row cols6">
+    <div class="stat-card"><div class="stat-val g">${s.hospitals}</div><div class="stat-lbl">Hospitals</div><div class="stat-bar"><div class="stat-fill" style="width:${Math.min(s.hospitals*10,100)}%;background:var(--green)"></div></div></div>
+    <div class="stat-card"><div class="stat-val b">${s.resources}</div><div class="stat-lbl">Resources</div><div class="stat-bar"><div class="stat-fill" style="width:70%;background:var(--blue)"></div></div></div>
+    <div class="stat-card"><div class="stat-val">${s.transfers}</div><div class="stat-lbl">Total Transfers</div><div class="stat-bar"><div class="stat-fill" style="width:55%;background:var(--teal)"></div></div></div>
+    <div class="stat-card"><div class="stat-val r">${s.pending_transfers}</div><div class="stat-lbl">Pending</div><div class="stat-bar"><div class="stat-fill" style="width:${Math.min(s.pending_transfers*20,100)}%;background:var(--red)"></div></div></div>
+    <div class="stat-card"><div class="stat-val a">${s.active_ambulances}</div><div class="stat-lbl">Ambulances</div><div class="stat-bar"><div class="stat-fill" style="width:75%;background:var(--amber)"></div></div></div>
+    <div class="stat-card"><div class="stat-val t">${s.total_icu}</div><div class="stat-lbl">ICU Beds Free</div><div class="stat-bar"><div class="stat-fill" style="width:65%;background:var(--teal)"></div></div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:16px">
+    <div id="overviewTransfers"></div>
+    <div id="overviewMessages"></div>
+  </div>`;
+}
+
+async function attachOverviewData() {
+  const [tr, msgs] = await Promise.all([API.get('/api/transfers'), API.get('/api/messages')]);
+  const pending = (tr.data||[]).filter(t=>t.status==='pending').slice(0,5);
+
+  const tBlock = document.getElementById('overviewTransfers');
+  if(tBlock) tBlock.innerHTML = `
+    <div class="panel">
+      <div class="panel-head"><div class="ph-title">PENDING APPROVALS</div><span class="ph-meta">${pending.length} waiting</span></div>
+      <table><thead><tr><th>From</th><th>Resource</th><th>To</th><th>Units</th><th>Action</th></tr></thead>
+      <tbody>${pending.map(t=>`<tr>
+        <td>${t.from_hospital}</td>
+        <td>${chip(t.resource_name,'blue')}</td>
+        <td>${t.to_hospital}</td>
+        <td style="font-family:'Space Mono',monospace">${t.units}</td>
+        <td style="display:flex;gap:6px">
+          <button class="btn btn-success btn-sm" onclick="approveTx(${t.id})">APPROVE</button>
+          <button class="btn btn-danger btn-sm"  onclick="rejectTx(${t.id})">REJECT</button>
+        </td>
+      </tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--muted)">No pending transfers</td></tr>'}
+      </tbody></table>
+    </div>`;
+
+  const mBlock = document.getElementById('overviewMessages');
+  if(mBlock) mBlock.innerHTML = `
+    <div class="panel" style="display:flex;flex-direction:column">
+      <div class="panel-head"><div class="ph-title">LIVE BROADCAST LOG</div></div>
+      <div class="msg-log" id="msgLogWidget">
+        ${(msgs.data||[]).slice(0,8).map(m=>`<div class="msg-item t"><strong>${m.sender_name}</strong>: ${m.content}<span class="msg-time">${m.timestamp}</span></div>`).join('')}
+      </div>
+      <div class="msg-compose">
+        <input class="msg-input" id="quickMsgInput" placeholder="Broadcast to all hospitals...">
+        <button class="msg-send" onclick="quickBroadcast()">SEND</button>
+      </div>
+    </div>`;
+}
+
+/* ────────────────────────────────────
+   HOSPITALS
+──────────────────────────────────── */
+async function pageHospitals() {
+  const { data: rows } = await API.get('/api/hospitals');
+  return `
+  <div class="page-header">
+    <div><div class="page-title">HOSPITAL MANAGEMENT</div><div class="page-sub">${rows.length} hospitals registered</div></div>
+    <div class="page-actions"><button class="btn btn-primary" onclick="openAddHospital()">+ ADD HOSPITAL</button></div>
+  </div>
+  <div class="panel"><table>
+    <thead><tr><th>ID</th><th>Name</th><th>Location</th><th>Network</th><th>ICU Free</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>${rows.map(h=>`<tr>
+      <td style="font-family:'Space Mono',monospace;font-size:.7rem;color:var(--muted)">#${h.id}</td>
+      <td style="font-weight:600">${h.name}</td>
+      <td style="color:var(--muted)">${h.location}</td>
+      <td>${chip(h.network,'teal')}</td>
+      <td style="font-family:'Space Mono',monospace;font-weight:700;color:var(--green)">${h.icu_available}</td>
+      <td>${statusChip(h.status)}</td>
+      <td style="display:flex;gap:6px">
+        <button class="btn btn-outline btn-sm" onclick="openEditHospital(${JSON.stringify(h).replace(/"/g,'&quot;')})">EDIT</button>
+        <button class="btn btn-danger btn-sm"  onclick="deleteHospital(${h.id},'${h.name}')">DELETE</button>
+      </td>
+    </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+/* ────────────────────────────────────
+   RESOURCES
+──────────────────────────────────── */
+async function pageResources() {
+  const [resR, hospR] = await Promise.all([API.get('/api/resources'), API.get('/api/hospitals')]);
+  const rows  = resR.data  || [];
+  const hosps = hospR.data || [];
+  return `
+  <div class="page-header">
+    <div><div class="page-title">RESOURCE MANAGEMENT</div><div class="page-sub">${rows.length} items tracked</div></div>
+    <div class="page-actions">
+      <select id="hospFilter" onchange="filterResTable()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:5px;font-size:.76rem;cursor:pointer">
+        <option value="">All Hospitals</option>
+        ${hosps.map(h=>`<option value="${h.id}">${h.name}</option>`).join('')}
+      </select>
+      <button class="btn btn-primary" onclick="openAddResource(${JSON.stringify(hosps).replace(/"/g,'&quot;')})">+ ADD RESOURCE</button>
+    </div>
+  </div>
+  <div class="panel"><table id="resTable">
+    <thead><tr><th>Name</th><th>Category</th><th>Hospital</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>${rows.map(r=>{
+      const low = r.stock <= r.critical_threshold;
+      return `<tr data-hosp="${r.hospital_id}">
+        <td style="font-weight:600">${r.name}</td>
+        <td>${chip(r.category,'muted')}</td>
+        <td style="color:var(--muted)">${r.hospital_name}</td>
+        <td style="font-family:'Space Mono',monospace;font-weight:700;color:${low?'var(--red)':'var(--green)'}">${r.stock} ${r.unit}</td>
+        <td>${chip(low?'CRITICAL':'OK', low?'red':'green')}</td>
+        <td style="display:flex;gap:6px">
+          <button class="btn btn-outline btn-sm" onclick='openEditResource(${JSON.stringify(r)})'>EDIT</button>
+          <button class="btn btn-danger  btn-sm" onclick="deleteResource(${r.id})">DEL</button>
+        </td>
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+/* ────────────────────────────────────
+   TRANSFERS
+──────────────────────────────────── */
+async function pageTransfers() {
+  const { data: rows } = await API.get('/api/transfers');
+  return `
+  <div class="page-header">
+    <div><div class="page-title">TRANSFER MANAGEMENT</div><div class="page-sub">${rows.length} total requests</div></div>
+  </div>
+  <div class="panel"><table>
+    <thead><tr><th>ID</th><th>From</th><th>Resource</th><th>To</th><th>Units</th><th>Requested By</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>${rows.map(t=>`<tr>
+      <td style="font-family:'Space Mono',monospace;font-size:.68rem;color:var(--muted)">TR-${t.id}</td>
+      <td>${t.from_hospital}</td>
+      <td>${chip(t.resource_name,'blue')}</td>
+      <td>${t.to_hospital}</td>
+      <td style="font-family:'Space Mono',monospace">${t.units}</td>
+      <td style="color:var(--muted)">${t.requested_by_name}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:.68rem;color:var(--muted)">${t.created_at}</td>
+      <td>${statusChip(t.status)}</td>
+      <td style="display:flex;gap:4px">
+        ${t.status==='pending'?`
+          <button class="btn btn-success btn-sm" onclick="approveTx(${t.id})">APPROVE</button>
+          <button class="btn btn-danger  btn-sm" onclick="rejectTx(${t.id})">REJECT</button>
+        `:'<span style="font-size:.7rem;color:var(--muted);font-family:Space Mono,monospace">'+t.status.toUpperCase()+'</span>'}
+      </td>
+    </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+/* ────────────────────────────────────
+   AMBULANCES
+──────────────────────────────────── */
+async function pageAmbulances() {
+  const [ambR, hospR] = await Promise.all([API.get('/api/ambulances'), API.get('/api/hospitals')]);
+  const rows  = ambR.data  || [];
+  const hosps = hospR.data || [];
+  return `
+  <div class="page-header">
+    <div><div class="page-title">AMBULANCE FLEET</div><div class="page-sub">${rows.filter(a=>a.status==='active').length} active units</div></div>
+    <div class="page-actions"><button class="btn btn-primary" onclick="openAddAmb(${JSON.stringify(hosps).replace(/"/g,'&quot;')})">+ ADD UNIT</button></div>
+  </div>
+  <div class="panel"><table>
+    <thead><tr><th>Code</th><th>Hospital</th><th>Status</th><th>Location</th><th>ETA</th><th>Actions</th></tr></thead>
+    <tbody>${rows.map(a=>`<tr>
+      <td style="font-family:'Space Mono',monospace;font-weight:700">${a.code}</td>
+      <td>${a.hospital_name||'—'}</td>
+      <td>${statusChip(a.status)}</td>
+      <td>${a.location}</td>
+      <td style="font-family:'Space Mono',monospace;color:var(--teal)">${a.eta}</td>
+      <td><button class="btn btn-outline btn-sm" onclick='openEditAmb(${JSON.stringify(a)},${JSON.stringify(hosps).replace(/"/g,'&quot;')})'>EDIT</button></td>
+    </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+/* ────────────────────────────────────
+   MESSAGING
+──────────────────────────────────── */
+async function pageMessaging() {
+  const { data: msgs } = await API.get('/api/messages');
+  return `
+  <div class="page-header"><div><div class="page-title">ADMIN BROADCAST</div><div class="page-sub">Inter-hospital messages</div></div></div>
+  <div class="panel" style="display:flex;flex-direction:column">
+    <div class="panel-head"><div class="ph-title">BROADCAST LOG</div><span class="ph-meta">${msgs.length} messages</span></div>
+    <div class="msg-log" id="fullMsgLog">
+      ${msgs.map(m=>`<div class="msg-item t"><strong>${m.sender_name}</strong>${m.hospital_name?' ('+m.hospital_name+')':''}: ${m.content}<span class="msg-time">${m.timestamp}</span></div>`).join('')}
+    </div>
+    <div class="msg-compose">
+      <input class="msg-input" id="broadcastInput" placeholder="Broadcast to all 142 hospitals... (admin message)">
+      <button class="msg-send" onclick="sendBroadcast()">BROADCAST</button>
+    </div>
+  </div>`;
+}
+
+/* ────────────────────────────────────
+   USERS
+──────────────────────────────────── */
+async function pageUsers() {
+  const [usersR, hospR] = await Promise.all([API.get('/api/users'), API.get('/api/hospitals')]);
+  const rows  = usersR.data || [];
+  const hosps = hospR.data  || [];
+  return `
+  <div class="page-header">
+    <div><div class="page-title">USER MANAGEMENT</div><div class="page-sub">${rows.length} accounts</div></div>
+    <div class="page-actions"><button class="btn btn-primary" onclick="openAddUser(${JSON.stringify(hosps).replace(/"/g,'&quot;')})">+ CREATE USER</button></div>
+  </div>
+  <div class="panel"><table>
+    <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Hospital</th><th>Created</th><th>Actions</th></tr></thead>
+    <tbody>${rows.map(u=>`<tr>
+      <td style="font-weight:600">${u.username}</td>
+      <td style="font-size:.78rem;color:var(--muted)">${u.email}</td>
+      <td>${chip(u.role.toUpperCase(), u.role==='admin'?'red':'teal')}</td>
+      <td>${u.hospital_name||'—'}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:.68rem;color:var(--muted)">${u.created_at}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id},'${u.username}')">REMOVE</button></td>
+    </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+/* ────────────────────────────────────
+   PAGE LISTENER ATTACHMENT
+──────────────────────────────────── */
+function attachPageListeners(page) {
+  if (page === 'overview') setTimeout(attachOverviewData, 50);
+}
+
+/* ────────────────────────────────────
+   TRANSFER ACTIONS
+──────────────────────────────────── */
+async function approveTx(id) {
+  const r = await API.put(`/api/transfers/${id}`, {status:'approved'});
+  if (r.success) { toast('Transfer approved. Stock deducted.','success'); renderPage(currentPage); }
+  else toast(r.error,'error');
+}
+async function rejectTx(id) {
+  const r = await API.put(`/api/transfers/${id}`, {status:'rejected'});
+  if (r.success) { toast('Transfer rejected.','warn'); renderPage(currentPage); }
+  else toast(r.error,'error');
+}
+
+/* ────────────────────────────────────
+   HOSPITAL MODALS
+──────────────────────────────────── */
+function openAddHospital() {
+  showModal('ADD HOSPITAL', `
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="hName" placeholder="Hospital name"></div>
+      <div class="form-group"><label class="form-label">Location</label><input class="form-input" id="hLoc" placeholder="Area, City"></div>
+    </div>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Network</label>
+        <select class="form-select" id="hNet"><option>5G</option><option>4G</option><option>3G</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">ICU Capacity</label><input class="form-input" id="hIcu" type="number" placeholder="200"></div>
+    </div>`,
+    [{label:'CANCEL',cls:'btn-outline',fn:'closeModal()'},{label:'ADD HOSPITAL',cls:'btn-primary',fn:'submitAddHospital()'}]
+  );
+}
+async function submitAddHospital() {
+  const r = await API.post('/api/hospitals', {
+    name:         document.getElementById('hName').value.trim(),
+    location:     document.getElementById('hLoc').value.trim(),
+    network:      document.getElementById('hNet').value,
+    icu_capacity: parseInt(document.getElementById('hIcu').value)||0,
+    icu_available:0
+  });
+  if (r.success) { closeModal(); toast('Hospital added!','success'); renderPage('hospitals'); }
+  else toast(r.error,'error');
+}
+
+function openEditHospital(h) {
+  showModal('EDIT HOSPITAL', `
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="eHName" value="${h.name}"></div>
+      <div class="form-group"><label class="form-label">Location</label><input class="form-input" id="eHLoc" value="${h.location}"></div>
+    </div>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">ICU Available</label><input class="form-input" id="eHIcuA" type="number" value="${h.icu_available}"></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="eHStatus">
+          ${['online','offline','maintenance'].map(s=>`<option ${s===h.status?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+    </div>`,
+    [{label:'CANCEL',cls:'btn-outline',fn:'closeModal()'},{label:'SAVE',cls:'btn-primary',fn:`submitEditHospital(${h.id})`}]
+  );
+}
+async function submitEditHospital(id) {
+  const r = await API.put(`/api/hospitals/${id}`, {
+    name:          document.getElementById('eHName').value.trim(),
+    location:      document.getElementById('eHLoc').value.trim(),
+    icu_available: parseInt(document.getElementById('eHIcuA').value)||0,
+    status:        document.getElementById('eHStatus').value
+  });
+  if (r.success) { closeModal(); toast('Hospital updated','success'); renderPage('hospitals'); }
+  else toast(r.error,'error');
+}
+
+async function deleteHospital(id, name) {
+  if(!confirm(`Delete ${name}? This cannot be undone.`)) return;
+  const r = await API.del(`/api/hospitals/${id}`);
+  if (r.success) { toast('Hospital removed','warn'); renderPage('hospitals'); }
+  else toast(r.error,'error');
+}
+
+/* ────────────────────────────────────
+   RESOURCE MODALS
+──────────────────────────────────── */
+function openAddResource(hosps) {
+  showModal('ADD RESOURCE', `
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="rName" placeholder="eg: Remdesivir"></div>
+      <div class="form-group"><label class="form-label">Category</label>
+        <select class="form-select" id="rCat"><option value="drug">Drug</option><option value="equipment">Equipment</option><option value="bed">Bed</option><option value="blood">Blood</option><option value="other">Other</option></select>
+      </div>
+    </div>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Hospital</label>
+        <select class="form-select" id="rHosp">${hosps.map(h=>`<option value="${h.id}">${h.name}</option>`).join('')}</select>
+      </div>
+      <div class="form-group"><label class="form-label">Stock</label><input class="form-input" id="rStock" type="number" placeholder="0"></div>
+    </div>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Unit</label><input class="form-input" id="rUnit" value="units"></div>
+      <div class="form-group"><label class="form-label">Critical Threshold</label><input class="form-input" id="rThresh" type="number" value="5"></div>
+    </div>`,
+    [{label:'CANCEL',cls:'btn-outline',fn:'closeModal()'},{label:'ADD RESOURCE',cls:'btn-primary',fn:'submitAddResource()'}]
+  );
+}
+async function submitAddResource() {
+  const r = await API.post('/api/resources', {
+    name:               document.getElementById('rName').value.trim(),
+    category:           document.getElementById('rCat').value,
+    hospital_id:        parseInt(document.getElementById('rHosp').value),
+    stock:              parseInt(document.getElementById('rStock').value)||0,
+    unit:               document.getElementById('rUnit').value,
+    critical_threshold: parseInt(document.getElementById('rThresh').value)||5,
+  });
+  if (r.success) { closeModal(); toast('Resource added!','success'); renderPage('resources'); }
+  else toast(r.error,'error');
+}
+
+function openEditResource(res) {
+  showModal('EDIT RESOURCE', `
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="erName" value="${res.name}"></div>
+      <div class="form-group"><label class="form-label">Stock</label><input class="form-input" id="erStock" type="number" value="${res.stock}"></div>
+    </div>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Unit</label><input class="form-input" id="erUnit" value="${res.unit}"></div>
+      <div class="form-group"><label class="form-label">Critical Threshold</label><input class="form-input" id="erThresh" type="number" value="${res.critical_threshold}"></div>
+    </div>`,
+    [{label:'CANCEL',cls:'btn-outline',fn:'closeModal()'},{label:'SAVE',cls:'btn-primary',fn:`submitEditResource(${res.id})`}]
+  );
+}
+async function submitEditResource(id) {
+  const r = await API.put(`/api/resources/${id}`, {
+    name:               document.getElementById('erName').value.trim(),
+    stock:              parseInt(document.getElementById('erStock').value)||0,
+    unit:               document.getElementById('erUnit').value,
+    critical_threshold: parseInt(document.getElementById('erThresh').value)||5,
+  });
+  if (r.success) { closeModal(); toast('Resource updated','success'); renderPage('resources'); }
+  else toast(r.error,'error');
+}
+
+async function deleteResource(id) {
+  if(!confirm('Delete this resource?')) return;
+  const r = await API.del(`/api/resources/${id}`);
+  if (r.success) { toast('Deleted','warn'); renderPage('resources'); }
+  else toast(r.error,'error');
+}
+
+function filterResTable() {
+  const hid = document.getElementById('hospFilter')?.value;
+  document.querySelectorAll('#resTable tbody tr').forEach(tr => {
+    tr.style.display = (!hid || tr.dataset.hosp == hid) ? '' : 'none';
+  });
+}
+
+/* ────────────────────────────────────
+   AMBULANCE MODALS
+──────────────────────────────────── */
+function openAddAmb(hosps) {
+  showModal('ADD AMBULANCE', `
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Code</label><input class="form-input" id="aCode" placeholder="MH-006"></div>
+      <div class="form-group"><label class="form-label">Hospital</label>
+        <select class="form-select" id="aHosp"><option value="">— None —</option>${hosps.map(h=>`<option value="${h.id}">${h.name}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="aStat"><option>active</option><option>busy</option><option>offline</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Location</label><input class="form-input" id="aLoc" value="Base"></div>
+    </div>`,
+    [{label:'CANCEL',cls:'btn-outline',fn:'closeModal()'},{label:'ADD',cls:'btn-primary',fn:'submitAddAmb()'}]
+  );
+}
+async function submitAddAmb() {
+  const r = await API.post('/api/ambulances', {
+    code:        document.getElementById('aCode').value.trim(),
+    hospital_id: document.getElementById('aHosp').value||null,
+    status:      document.getElementById('aStat').value,
+    location:    document.getElementById('aLoc').value,
+  });
+  if (r.success) { closeModal(); toast('Ambulance added!','success'); renderPage('ambulances'); }
+  else toast(r.error,'error');
+}
+
+function openEditAmb(a, hosps) {
+  showModal('EDIT AMBULANCE', `
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="eAStat">
+          ${['active','busy','offline'].map(s=>`<option ${s===a.status?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Location</label><input class="form-input" id="eALoc" value="${a.location}"></div>
+    </div>
+    <div class="form-group"><label class="form-label">ETA</label><input class="form-input" id="eAEta" value="${a.eta}"></div>`,
+    [{label:'CANCEL',cls:'btn-outline',fn:'closeModal()'},{label:'SAVE',cls:'btn-primary',fn:`submitEditAmb(${a.id})`}]
+  );
+}
+async function submitEditAmb(id) {
+  const r = await API.put(`/api/ambulances/${id}`, {
+    status:   document.getElementById('eAStat').value,
+    location: document.getElementById('eALoc').value,
+    eta:      document.getElementById('eAEta').value,
+  });
+  if (r.success) { closeModal(); toast('Ambulance updated','success'); renderPage('ambulances'); }
+  else toast(r.error,'error');
+}
+
+/* ────────────────────────────────────
+   USER MODALS
+──────────────────────────────────── */
+function openAddUser(hosps) {
+  showModal('CREATE USER', `
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="uName" placeholder="username"></div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="uEmail" type="email" placeholder="email@hospital.in"></div>
+    </div>
+    <div class="fg2">
+      <div class="form-group"><label class="form-label">Password</label><input class="form-input" id="uPass" type="password" placeholder="Min 6 chars"></div>
+      <div class="form-group"><label class="form-label">Role</label>
+        <select class="form-select" id="uRole"><option value="staff">Staff</option><option value="admin">Admin</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Hospital (for staff)</label>
+      <select class="form-select" id="uHosp"><option value="">— None —</option>${hosps.map(h=>`<option value="${h.id}">${h.name}</option>`).join('')}</select>
+    </div>`,
+    [{label:'CANCEL',cls:'btn-outline',fn:'closeModal()'},{label:'CREATE',cls:'btn-primary',fn:'submitAddUser()'}]
+  );
+}
+async function submitAddUser() {
+  const r = await API.post('/api/users', {
+    username:    document.getElementById('uName').value.trim(),
+    email:       document.getElementById('uEmail').value.trim(),
+    password:    document.getElementById('uPass').value,
+    role:        document.getElementById('uRole').value,
+    hospital_id: document.getElementById('uHosp').value||null,
+  });
+  if (r.success) { closeModal(); toast('User created!','success'); renderPage('users'); }
+  else toast(r.error,'error');
+}
+
+async function deleteUser(id, name) {
+  if(!confirm(`Remove user ${name}?`)) return;
+  const r = await API.del(`/api/users/${id}`);
+  if (r.success) { toast('User removed','warn'); renderPage('users'); }
+  else toast(r.error,'error');
+}
+
+/* ────────────────────────────────────
+   MESSAGING
+──────────────────────────────────── */
+async function sendBroadcast() {
+  const inp = document.getElementById('broadcastInput');
+  if (!inp?.value.trim()) return;
+  const r = await API.post('/api/messages', {content: inp.value.trim(), broadcast: 1});
+  if (r.success) {
+    toast('Broadcast sent to all hospitals','success');
+    const log = document.getElementById('fullMsgLog');
+    if (log) {
+      const d = document.createElement('div');
+      d.className = 'msg-item b';
+      d.innerHTML = `<strong>admin</strong>: ${inp.value}<span class="msg-time">${getTime()}</span>`;
+      log.prepend(d);
+    }
+    inp.value = '';
+  } else toast(r.error,'error');
+}
+
+async function quickBroadcast() {
+  const inp = document.getElementById('quickMsgInput');
+  if (!inp?.value.trim()) return;
+  const r = await API.post('/api/messages', {content: inp.value.trim(), broadcast: 1});
+  if (r.success) {
+    toast('Broadcast sent','success');
+    const log = document.getElementById('msgLogWidget');
+    if (log) {
+      const d = document.createElement('div');
+      d.className = 'msg-item b';
+      d.innerHTML = `<strong>admin</strong>: ${inp.value}<span class="msg-time">${getTime()}</span>`;
+      log.prepend(d);
+    }
+    inp.value = '';
+  }
+}
+
+async function broadcastAlert() {
+  const msg = prompt('Enter emergency broadcast message:');
+  if (!msg) return;
+  await API.post('/api/messages', {content: '🚨 ALERT: ' + msg, broadcast: 1});
+  toast('Emergency alert broadcast sent!','error');
+}
+
+/* ────────────────────────────────────
+   INIT
+──────────────────────────────────── */
+(async function init() {
+  try {
+    const me = await API.get('/api/me');
+    if (me.success) document.getElementById('tbUsername').textContent = me.data.username;
+  } catch(e) {}
+  renderPage('overview');
+  // auto-refresh pending badge every 30s
+  setInterval(async () => {
+    try {
+      const { data: s } = await API.get('/api/admin/stats');
+      document.getElementById('pendingBadge').textContent = s.pending_transfers || 0;
+    } catch(e) {}
+  }, 30000);
+})();
+</script>
+</body>
+</html>
