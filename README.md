@@ -126,4 +126,4 @@ All responses: `{ "success": true, "data": … }` or `{ "success": false, "error
 
 ---
 
-<sub>Built as a mini project for the Web Programming and Database Management Systems lab courses. Sample hospitals and data are illustrative.</sub>
+<sub>Built as a project for the Web Programming and Database Management Systems lab courses. Sample hospitals and data are illustrative. Project developed as scalable prototype</sub>
